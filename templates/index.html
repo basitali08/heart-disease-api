@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Disease Prediction API</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; font-size: 28px; }
+        h1 span { color: #667eea; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px; }
+        input, select { width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; transition: border-color 0.3s; }
+        input:focus, select:focus { outline: none; border-color: #667eea; }
+        .btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: transform 0.2s; }
+        .btn:hover { transform: translateY(-2px); }
+        .result { margin-top: 25px; padding: 20px; border-radius: 10px; text-align: center; }
+        .result.positive { background: #ffe0e0; border: 2px solid #ff6b6b; }
+        .result.negative { background: #e0ffe0; border: 2px solid #51cf66; }
+        .result h2 { margin-bottom: 10px; }
+        .result p { font-size: 16px; margin: 5px 0; }
+        .error { background: #fff3cd; border: 2px solid #ffc107; padding: 10px; border-radius: 8px; text-align: center; margin-top: 20px; }
+        .info { margin-top: 30px; padding: 15px; background: #f8f9fa; border-radius: 10px; font-size: 13px; color: #666; }
+        .info a { color: #667eea; }
+        .half { grid-column: span 2; }
+        @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>❤️ <span>Heart Disease</span> Prediction</h1>
+        <p style="text-align:center;color:#666;margin-bottom:25px;">Enter patient clinical attributes to predict heart disease risk</p>
+
+        <form method="POST" action="/predict">
+            <div class="grid">
+                <div class="form-group">
+                    <label>Age</label>
+                    <input type="number" name="age" value="{{ values.age if values else 52 }}" min="20" max="100" required>
+                </div>
+                <div class="form-group">
+                    <label>Sex</label>
+                    <select name="sex">
+                        <option value="0" {{ 'selected' if values and values.sex == 0 else '' }}>Female</option>
+                        <option value="1" {{ 'selected' if values and values.sex == 1 else '' }}>Male</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Chest Pain Type (cp)</label>
+                    <select name="cp">
+                        <option value="0" {{ 'selected' if values and values.cp == 0 else '' }}>Typical Angina</option>
+                        <option value="1" {{ 'selected' if values and values.cp == 1 else '' }}>Atypical Angina</option>
+                        <option value="2" {{ 'selected' if values and values.cp == 2 else '' }}>Non-anginal Pain</option>
+                        <option value="3" {{ 'selected' if values and values.cp == 3 else '' }}>Asymptomatic</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Resting BP (trestbps)</label>
+                    <input type="number" name="trestbps" value="{{ values.trestbps if values else 130 }}" min="80" max="250" required>
+                </div>
+                <div class="form-group">
+                    <label>Cholesterol (chol)</label>
+                    <input type="number" name="chol" value="{{ values.chol if values else 240 }}" min="100" max="600" required>
+                </div>
+                <div class="form-group">
+                    <label>Fasting Blood Sugar (fbs > 120)</label>
+                    <select name="fbs">
+                        <option value="0" {{ 'selected' if values and values.fbs == 0 else '' }}>False</option>
+                        <option value="1" {{ 'selected' if values and values.fbs == 1 else '' }}>True</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Resting ECG (restecg)</label>
+                    <select name="restecg">
+                        <option value="0" {{ 'selected' if values and values.restecg == 0 else '' }}>Normal</option>
+                        <option value="1" {{ 'selected' if values and values.restecg == 1 else '' }}>ST-T Abnormality</option>
+                        <option value="2" {{ 'selected' if values and values.restecg == 2 else '' }}>Left Ventricular Hypertrophy</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Max Heart Rate (thalach)</label>
+                    <input type="number" name="thalach" value="{{ values.thalach if values else 150 }}" min="60" max="220" required>
+                </div>
+                <div class="form-group">
+                    <label>Exercise Induced Angina (exang)</label>
+                    <select name="exang">
+                        <option value="0" {{ 'selected' if values and values.exang == 0 else '' }}>No</option>
+                        <option value="1" {{ 'selected' if values and values.exang == 1 else '' }}>Yes</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>ST Depression (oldpeak)</label>
+                    <input type="number" step="0.1" name="oldpeak" value="{{ values.oldpeak if values else 1.0 }}" min="0" max="10" required>
+                </div>
+                <div class="form-group">
+                    <label>Slope of ST Segment</label>
+                    <select name="slope">
+                        <option value="0" {{ 'selected' if values and values.slope == 0 else '' }}>Upsloping</option>
+                        <option value="1" {{ 'selected' if values and values.slope == 1 else '' }}>Flat</option>
+                        <option value="2" {{ 'selected' if values and values.slope == 2 else '' }}>Downsloping</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Major Vessels (ca)</label>
+                    <select name="ca">
+                        <option value="0" {{ 'selected' if values and values.ca == 0 else '' }}>0</option>
+                        <option value="1" {{ 'selected' if values and values.ca == 1 else '' }}>1</option>
+                        <option value="2" {{ 'selected' if values and values.ca == 2 else '' }}>2</option>
+                        <option value="3" {{ 'selected' if values and values.ca == 3 else '' }}>3</option>
+                    </select>
+                </div>
+                <div class="form-group half">
+                    <label>Thalassemia (thal)</label>
+                    <select name="thal">
+                        <option value="0" {{ 'selected' if values and values.thal == 0 else '' }}>Normal</option>
+                        <option value="1" {{ 'selected' if values and values.thal == 1 else '' }}>Fixed Defect</option>
+                        <option value="2" {{ 'selected' if values and values.thal == 2 else '' }}>Reversible Defect</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn">Predict Heart Disease Risk</button>
+        </form>
+
+        {% if prediction %}
+        <div class="result {{ 'positive' if prediction == 'Heart Disease Detected' else 'negative' }}">
+            <h2>{{ prediction }}</h2>
+            <p><strong>Probability:</strong> {{ probability }}</p>
+            <p><strong>Risk Level:</strong> {{ risk }}</p>
+        </div>
+        {% endif %}
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <div class="info">
+            <strong>API Endpoints:</strong><br>
+            <code>GET /predict?age=52&sex=1&cp=0&...</code> - JSON prediction<br>
+            <code>GET /health</code> - Health check<br>
+            <a href="/docs" target="_blank">Swagger Documentation</a> |
+            <a href="/redoc" target="_blank">ReDoc Documentation</a>
+        </div>
+    </div>
+</body>
+</html>
